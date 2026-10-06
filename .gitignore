@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+.env.*
+.alchemy/
+.wrangler/
+.dev.vars
+!.env.example
+.claude/settings.local.json

@@ -1,0 +1,50 @@
+{
+  "name": "markdown-memory",
+  "version": "0.1.0",
+  "description": "An agent that keeps its long-term memory as a git repo of markdown (an LLM wiki). Cloudflare Durable Objects + Artifacts, open-weight models via OpenRouter.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/alchemy.mjs dev",
+    "deploy": "node scripts/alchemy.mjs deploy",
+    "destroy": "node scripts/alchemy.mjs destroy",
+    "check:types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/react": "^4.0.130",
+    "@cloudflare/ai-chat": "^0.12.1",
+    "@openrouter/ai-sdk-provider": "^3.1.0",
+    "@pierre/diffs": "^1.5.1",
+    "@pierre/trees": "^1.0.0-beta.6",
+    "agents": "^0.26.0",
+    "ai": "^7.0.127",
+    "alchemy": "2.0.0-beta.81",
+    "d3": "^7.9.0",
+    "isomorphic-git": "^1.43.0",
+    "just-bash": "^3.6.0",
+    "lucide-react": "^1.52.0",
+    "memfs": "^4.80.0",
+    "novel": "^1.0.2",
+    "pixi.js": "8",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "tiptap-markdown": "^0.8",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@alchemy.run/frontend-frameworks": "2.0.0-beta.81",
+    "@cloudflare/workers-types": "^5.20261004.1",
+    "@effect/platform-bun": "^4",
+    "@effect/platform-node": "^4",
+    "@types/d3": "^7.4.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "effect": "^4",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.2"
+  }
+}
