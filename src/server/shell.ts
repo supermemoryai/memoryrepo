@@ -53,10 +53,16 @@ export function makeShell(files: Files, opts: { writable: boolean; inbox?: Files
   return {
     vault,
     async run(command) {
-      const result = await bash.exec(command, { signal: AbortSignal.timeout(20_000) });
-      let out = result.stdout;
-      if (result.stderr) out += (out ? "\n" : "") + result.stderr;
-      if (result.exitCode !== 0) out += `\n[exit ${result.exitCode}]`;
+      let out: string;
+      try {
+        const result = await bash.exec(command, { signal: AbortSignal.timeout(20_000) });
+        out = result.stdout;
+        if (result.stderr) out += (out ? "\n" : "") + result.stderr;
+        if (result.exitCode !== 0) out += `\n[exit ${result.exitCode}]`;
+      } catch (error) {
+        // A redirect (`>`, `>>`) onto a read-only mount rejects instead of failing the command.
+        out = `bash: ${error instanceof Error ? error.message : String(error)}\n[exit 1]`;
+      }
       if (out.length > OUTPUT_LIMIT) out = `${out.slice(0, OUTPUT_LIMIT)}\n… [truncated ${out.length - OUTPUT_LIMIT} chars]`;
       return out || "(no output)";
     },
