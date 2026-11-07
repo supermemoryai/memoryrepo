@@ -3,7 +3,7 @@ import { BANK, DEFAULT_BANK, MAX_BANKS, parseMemoryName } from "../shared/banks.
 import { buildGraph, type Graph } from "../shared/links.ts";
 import { dream, type CommitOutcome, type FileChange } from "./memory.ts";
 import type { Env } from "./env.ts";
-import { DEFAULT_CHAT_MODEL, DEFAULT_DREAM_MODEL, MODELS, metered, resolveModel, type CallUsage, type ModelInfo } from "./models.ts";
+import { DEFAULT_CHAT_MODEL, DEFAULT_DREAM_MODEL, MODELS, metered, migrateModelId, resolveModel, type CallUsage, type ModelInfo } from "./models.ts";
 import { buildInbox, parseSourceRef, sourceExcerpt, type TranscriptMessage } from "./transcripts.ts";
 import { Vault, type Files } from "./vault.ts";
 
@@ -139,7 +139,7 @@ export class MemoryAgent extends Agent<Env, MemoryState> {
 
   @callable()
   setPrefs(patch: Partial<Prefs>) {
-    const known = (id: unknown, fallback: string) => (typeof id === "string" && id ? id : fallback);
+    const known = (id: unknown, fallback: string) => (typeof id === "string" && id ? migrateModelId(id) : fallback);
     const prefs = { ...this.state.prefs, ...patch };
     this.setState({ ...this.state, prefs: { chatModel: known(prefs.chatModel, DEFAULT_CHAT_MODEL), dreamModel: known(prefs.dreamModel, DEFAULT_DREAM_MODEL) } });
   }

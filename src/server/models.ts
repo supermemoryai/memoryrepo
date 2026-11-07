@@ -3,29 +3,43 @@ import { createWorkersAI } from "workers-ai-provider";
 
 /**
  * Open-weight models with tool calling, served through Workers AI (the env.AI binding —
- * no API key, no egress). Prices are USD per 1M tokens as listed by Cloudflare (Oct 2026);
+ * no API key, no egress). Prices are USD per 1M tokens as listed by Cloudflare (Nov 2026);
  * the binding reports no per-call cost, so the meter below uses these list prices.
  */
 export type ModelInfo = { id: string; name: string; context: number; inPerM: number; outPerM: number };
 
 export const MODELS: ModelInfo[] = [
   { id: "@cf/zai-org/glm-5.3", name: "GLM 5.3", context: 1_048_576, inPerM: 1.4, outPerM: 4.4 },
-  { id: "@cf/zai-org/glm-5.3-flash", name: "GLM 5.3 Flash", context: 1_048_576, inPerM: 0.15, outPerM: 0.5 },
-  { id: "@cf/deepseek-ai/deepseek-v4-pro-0813", name: "DeepSeek V4 Pro", context: 1_048_576, inPerM: 1.32, outPerM: 3.96 },
-  { id: "@cf/deepseek-ai/deepseek-v4-flash-0731", name: "DeepSeek V4 Flash", context: 1_048_576, inPerM: 0.44, outPerM: 1.32 },
-  { id: "@cf/moonshotai/kimi-k2.6", name: "Kimi K2.6", context: 262_144, inPerM: 0.95, outPerM: 4.0 },
   { id: "@cf/qwen/qwen3.8-27b", name: "Qwen3.8 27B", context: 262_144, inPerM: 0.45, outPerM: 3.2 },
   { id: "@cf/openai/gpt-oss-120b", name: "gpt-oss-120b", context: 128_000, inPerM: 0.35, outPerM: 0.75 },
-  { id: "@cf/nvidia/nemotron-3-120b-a12b", name: "Nemotron 3 120B", context: 256_000, inPerM: 0.5, outPerM: 1.5 },
+  { id: "@cf/deepseek-ai/deepseek-v4.1-flash-1017", name: "DeepSeek V4.1 Flash", context: 1_048_576, inPerM: 0.3, outPerM: 1.2 },
+  { id: "@cf/google/gemma-4-26b-a4b-it", name: "Gemma 4 26B", context: 256_000, inPerM: 0.1, outPerM: 0.3 },
 ];
 
 export const DEFAULT_CHAT_MODEL = "@cf/zai-org/glm-5.3";
-export const DEFAULT_DREAM_MODEL = "@cf/deepseek-ai/deepseek-v4-pro-0813";
+export const DEFAULT_DREAM_MODEL = "@cf/deepseek-ai/deepseek-v4.1-flash-1017";
 
-export const modelInfo = (id: string): ModelInfo => MODELS.find((m) => m.id === id) ?? { id, name: id, context: 200_000, inPerM: 0, outPerM: 0 };
+/**
+ * Workers AI retired these on 2026-11-20; calls now fail with HTTP 410 / error 5028.
+ * Prefs and usage rows persisted before then still pin them, so map them forward
+ * rather than handing a dead id to the binding. Kimi and Nemotron have no successor
+ * in the catalog, so those selections fall back to the chat default.
+ */
+const RETIRED_MODELS: Record<string, string> = {
+  "@cf/zai-org/glm-5.3-flash": "@cf/google/gemma-4-26b-a4b-it",
+  "@cf/deepseek-ai/deepseek-v4-pro-0813": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
+  "@cf/deepseek-ai/deepseek-v4-flash-0731": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
+  "@cf/moonshotai/kimi-k2.6": DEFAULT_CHAT_MODEL,
+  "@cf/nvidia/nemotron-3-120b-a12b": DEFAULT_CHAT_MODEL,
+};
+
+/** Resolve a possibly-retired model id to one the catalog still serves. */
+export const migrateModelId = (id: string): string => RETIRED_MODELS[id] ?? id;
+
+export const modelInfo = (id: string): ModelInfo => MODELS.find((m) => m.id === migrateModelId(id)) ?? { id, name: id, context: 200_000, inPerM: 0, outPerM: 0 };
 
 export function resolveModel(id: string, ai: Ai): LanguageModel {
-  return createWorkersAI({ binding: ai }).chat(id);
+  return createWorkersAI({ binding: ai }).chat(migrateModelId(id));
 }
 
 /** One model call, as reported by the provider. `input` includes `cached`. */
